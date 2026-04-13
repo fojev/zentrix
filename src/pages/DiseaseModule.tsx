@@ -1,14 +1,20 @@
 import { useState, useRef } from 'react';
 import { Upload, FileDown, Sparkles, HeartPulse, AlertTriangle } from 'lucide-react';
 import Papa from 'papaparse';
-import { symptomsList } from '@/lib/sampleData';
 import { exportDiseaseReport } from '@/lib/pdfExport';
+
+export const symptomsList = [
+  'Fever', 'Cough', 'Headache', 'Fatigue', 'Sore Throat',
+  'Runny Nose', 'Body Ache', 'Nausea', 'Dizziness', 'Chest Pain',
+  'Shortness of Breath', 'Sneezing', 'Chills', 'Vomiting', 'Diarrhea',
+  'Loss of Appetite', 'Joint Pain', 'Rash', 'Blurred Vision', 'Frequent Urination',
+];
 
 const API_BASE = "http://127.0.0.1:8000";
 
 export default function DiseaseModule() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [result, setResult] = useState<{ disease: string; dos: string[]; donts: string[] } | null>(null);
+  const [result, setResult] = useState<{ disease: string; dos: string[]; donts: string[]; ai_suggestion?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -59,7 +65,7 @@ export default function DiseaseModule() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Disease Prediction System</h1>
-          <p className="text-sm text-muted-foreground">ML-powered symptom analysis and health recommendations from Real Backend</p>
+          <p className="text-sm text-muted-foreground">Symptom analysis and health recommendations</p>
         </div>
       </div>
 
@@ -117,13 +123,11 @@ export default function DiseaseModule() {
                 <Sparkles className="w-8 h-8 text-orange-400" />
               </div>
               <h3 className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4" /> Smart Health Insight
+                <Sparkles className="w-4 h-4" /> Personalized Advice
               </h3>
-              {loading ? (
-                <p className="text-sm text-foreground leading-relaxed relative z-10">Generating AI insights...</p>
-              ) : (
-                <p className="text-sm text-foreground leading-relaxed relative z-10">{result?.ai_suggestion || "No AI response"}</p>
-              )}
+              <p className="text-sm text-foreground leading-relaxed relative z-10">
+                {result?.ai_suggestion}
+              </p>
             </div>
           </div>
 

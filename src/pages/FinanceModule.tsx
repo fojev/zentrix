@@ -69,7 +69,7 @@ export default function FinanceModule() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Finance Analysis System</h1>
-          <p className="text-sm text-muted-foreground">Track, predict, and optimize your finances with Real AI</p>
+          <p className="text-sm text-muted-foreground">Track, predict, and optimize your finances</p>
         </div>
       </div>
 
@@ -176,13 +176,11 @@ export default function FinanceModule() {
                   <Sparkles className="w-8 h-8 text-emerald-400" />
                 </div>
                 <h3 className="text-sm font-semibold text-emerald-400 flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4" /> Intelligent Savings Advice
+                  <Sparkles className="w-4 h-4" /> Personalized Advice
                 </h3>
-                {loading ? (
-                  <p className="text-sm text-foreground leading-relaxed relative z-10">Generating AI insights...</p>
-                ) : (
-                  <p className="text-sm text-foreground leading-relaxed relative z-10">{analysis?.ai_suggestion || "No AI response"}</p>
-                )}
+                <p className="text-sm text-foreground leading-relaxed relative z-10">
+                  {analysis?.ai_suggestion}
+                </p>
               </div>
             )}
           </div>

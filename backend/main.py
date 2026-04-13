@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
 
 from schema import Student, Finance, Disease
 import database
@@ -8,7 +7,6 @@ import database
 from models.student_model import predict_student
 from models.finance_model import analyze_finance
 from models.disease_model import predict_disease
-from utils.ai_service import generate_gemini_suggestion
 
 app = FastAPI()
 
@@ -37,8 +35,16 @@ def add_student(data: Student):
         student_record["id"] = database.student_id_counter
         database.student_id_counter += 1
         
-        # Add AI Suggestion
-        student_record["ai_suggestion"] = generate_gemini_suggestion("student", student_record)
+        # Rule-based ML Suggestion
+        cat = prediction_result.get("category", "Unknown")
+        if data.attendance < 75:
+            adv = "Improving your attendance is critical to better performance."
+        elif data.studyHours < 3:
+            adv = "Increasing your study hours will directly boost your projected score."
+        else:
+            adv = "Keep maintaining your current positive habits."
+        
+        student_record["ai_suggestion"] = f"Based on your current metrics (Marks: {data.marks}, Attendance: {data.attendance}%, Study: {data.studyHours}h), the ML model categorizes you as '{cat}'. {adv}"
         
         database.students_db.append(student_record)
         return student_record
@@ -59,8 +65,15 @@ def update_student(student_id: int, data: Student):
                 updated_record.update(prediction_result)
                 updated_record["id"] = student_id
                 
-                # Add AI Suggestion
-                updated_record["ai_suggestion"] = generate_gemini_suggestion("student", updated_record)
+                cat = prediction_result.get("category", "Unknown")
+                if data.attendance < 75:
+                    adv = "Improving your attendance is critical to better performance."
+                elif data.studyHours < 3:
+                    adv = "Increasing your study hours will directly boost your projected score."
+                else:
+                    adv = "Keep maintaining your current positive habits."
+                
+                updated_record["ai_suggestion"] = f"Based on your updated metrics (Marks: {data.marks}, Attendance: {data.attendance}%, Study: {data.studyHours}h), the ML model categorizes you as '{cat}'. {adv}"
                 
                 database.students_db[i] = updated_record
                 return updated_record
@@ -85,10 +98,17 @@ def finance(data: Finance):
     try:
         analysis_result = analyze_finance(data.income, data.expenses)
         
-        # Add AI Suggestion
+        savings = analysis_result["savings"]
+        rate = analysis_result["savings_rate"]
         
-        combined_finance = {**data.dict(), **analysis_result}
-        analysis_result["ai_suggestion"] = generate_gemini_suggestion("finance", combined_finance)
+        if savings < 0:
+            adv = "You are currently running a deficit. Immediate expense reduction is recommended."
+        elif rate < 20:
+            adv = "Try following the 50/30/20 rule to safely increase your savings rate."
+        else:
+            adv = "You have a healthy savings rate. Consider investing your surplus into index funds."
+            
+        analysis_result["ai_suggestion"] = f"Based on your Income (${data.income}) and total Expenses (${analysis_result['total_expense']}), your ML projected savings are ${savings}. {adv}"
         
         database.finance_db.append(analysis_result)
         return analysis_result
@@ -100,16 +120,14 @@ def finance(data: Finance):
 def disease(data: Disease):
     try:
         disease_name, dos, donts = predict_disease(data.symptoms)
+        
+        suggestion = f"Based on your selected symptoms, the ML classification model predicts a possible condition of '{disease_name}'. Please ensure you follow the recommended precautions and seek professional medical advice if symptoms persist."
+        
         result = {
             "disease": disease_name,
             "dos": dos,
             "donts": donts,
-            "ai_suggestion": generate_gemini_suggestion("disease", {
-                **data.dict(),
-                "predicted_disease": disease_name,
-                "suggested_dos": dos,
-                "suggested_donts": donts
-            })
+            "ai_suggestion": suggestion
         }
         database.disease_db.append(result)
         return result

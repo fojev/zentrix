@@ -4,6 +4,4 @@ pydantic
 scikit-learn
 numpy
 pandas
-python-dotenv
-requests
 python-multipart

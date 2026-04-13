@@ -89,7 +89,7 @@ export default function StudentModule() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Student Performance Prediction</h1>
-          <p className="text-sm text-muted-foreground">Analyze and predict academic performance using Real Backend ML</p>
+          <p className="text-sm text-muted-foreground">Analyze and predict academic performance</p>
         </div>
       </div>
 
@@ -225,13 +225,11 @@ export default function StudentModule() {
                     <Sparkles className="w-8 h-8 text-primary" />
                   </div>
                   <h3 className="text-sm font-semibold text-primary flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4" /> Intelligent AI Insight
+                    <Sparkles className="w-4 h-4" /> Personalized Advice
                   </h3>
-                  {loading ? (
-                    <p className="text-sm text-foreground leading-relaxed relative z-10">Generating AI insights...</p>
-                  ) : (
-                    <p className="text-sm text-foreground leading-relaxed relative z-10">{selectedResult?.ai_suggestion || "No AI response"}</p>
-                  )}
+                  <p className="text-sm text-foreground leading-relaxed relative z-10">
+                    {selectedResult?.ai_suggestion}
+                  </p>
                 </div>
               )}
             </div>
