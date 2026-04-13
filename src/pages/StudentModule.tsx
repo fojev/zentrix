@@ -4,7 +4,7 @@ import { Upload, FileDown, Sparkles, TrendingUp } from 'lucide-react';
 import Papa from 'papaparse';
 import { exportStudentReport } from '@/lib/pdfExport';
 
-import { BASE_URL } from '../config/api';
+import { BASE_URL, getUserId } from '../config/api';
 
 interface Student { name: string; subject: string; marks: number; attendance: number; studyHours: number; }
 interface Result extends Student { lrScore: number; rfScore: number; avgScore: number; category: string; suggestions: string[]; ai_suggestion?: string; }
@@ -24,11 +24,16 @@ export default function StudentModule() {
 
   const fetchStudents = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/students`);
+      const res = await fetch(`${BASE_URL}/students`, {
+        headers: { 'X-User-ID': getUserId() }
+      });
+      if (!res.ok) throw new Error("Failed to fetch students");
       const data = await res.json();
       setStudents(data);
       if (data.length > 0) {
         setResults(data.filter((d: any) => d.avgScore !== undefined));
+      } else {
+        setResults([]);
       }
     } catch (err) {
       console.error("Failed to fetch students", err);
@@ -42,14 +47,16 @@ export default function StudentModule() {
       setError(null);
       const res = await fetch(`${BASE_URL}/add-student`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-User-ID': getUserId()
+        },
         body: JSON.stringify(form)
       });
+      if (!res.ok) throw new Error("Server not responding");
       const newStudent = await res.json();
-      console.log("Add Student API Response:", newStudent);
-      setStudents(prev => [...prev, newStudent]);
       setForm({ name: '', subject: '', marks: 0, attendance: 0, studyHours: 0 });
-      fetchStudents(); // Refresh results
+      fetchStudents(); // Refresh results to keep it perfectly synced
     } catch (err) {
       console.error("Failed to add student", err);
       setError("Server not responding");
@@ -69,13 +76,19 @@ export default function StudentModule() {
           marks: +d.marks, attendance: +d.attendance, studyHours: +d.studyHours || +d.study_hours,
         }));
         
-        // Send each to backend (sequentially for simplicity in this turn)
         for (const student of parsed) {
-          await fetch(`${BASE_URL}/add-student`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(student)
-          });
+          try {
+            await fetch(`${BASE_URL}/add-student`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'X-User-ID': getUserId()
+              },
+              body: JSON.stringify(student)
+            });
+          } catch (e) {
+             console.error("Error pushing csv row", e);
+          }
         }
         fetchStudents();
       },
@@ -107,23 +120,23 @@ export default function StudentModule() {
           <input type="number" placeholder="Study Hrs" value={form.studyHours || ''} onChange={e => setForm({...form, studyHours: +e.target.value})} className="px-3 py-2 rounded-lg bg-muted text-foreground text-sm border border-border focus:ring-2 focus:ring-primary/50 outline-none" />
         </div>
         <div className="flex gap-3 flex-wrap">
-          <button onClick={addStudent} disabled={loading} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50">
-            {loading ? 'Adding...' : 'Add Student & Predict'}
+          <button onClick={addStudent} disabled={loading} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2">
+            <Sparkles className="w-4 h-4" /> {loading ? 'Adding...' : 'Add Student & Predict'}
           </button>
           <button onClick={() => fileRef.current?.click()} className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition flex items-center gap-2">
             <Upload className="w-4 h-4" /> Upload CSV
           </button>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleCSV} className="hidden" />
         </div>
-        {loading && <div className="text-sm font-medium text-primary mt-2">Generating insights...</div>}
+        {loading && <div className="text-sm font-medium text-primary mt-2">Generating AI insights...</div>}
         {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
       </div>
 
       {/* Data Table */}
       <div className="glass-card rounded-xl p-6 overflow-x-auto">
-        <h2 className="font-semibold text-foreground mb-3">Student Data ({students.length})</h2>
+        <h2 className="font-semibold text-foreground mb-3">Student History ({students.length})</h2>
         {students.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">No Data Available</div>
+          <div className="text-center py-8 text-muted-foreground">No records currently stored. Try predicting performance!</div>
         ) : (
         <table className="w-full text-sm">
           <thead>
@@ -216,13 +229,6 @@ export default function StudentModule() {
                   <FileDown className="w-4 h-4" /> Download PDF
                 </button>
               </div>
-              <ul className="space-y-2 mb-6">
-                {selectedResult.suggestions.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="text-primary mt-0.5">•</span> {s}
-                  </li>
-                ))}
-              </ul>
 
               {selectedResult.ai_suggestion && (
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 relative overflow-hidden group">

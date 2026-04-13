@@ -10,7 +10,7 @@ export const symptomsList = [
   'Loss of Appetite', 'Joint Pain', 'Rash', 'Blurred Vision', 'Frequent Urination',
 ];
 
-import { BASE_URL } from '../config/api';
+import { BASE_URL, getUserId } from '../config/api';
 
 export default function DiseaseModule() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
@@ -46,9 +46,13 @@ export default function DiseaseModule() {
       setError(null);
       const res = await fetch(`${BASE_URL}/disease`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-User-ID': getUserId()
+        },
         body: JSON.stringify({ symptoms: selectedSymptoms })
       });
+      if (!res.ok) throw new Error("Server not responding");
       const data = await res.json();
       console.log("Disease API Response:", data);
       setResult(data);
@@ -106,7 +110,7 @@ export default function DiseaseModule() {
             <Sparkles className="w-4 h-4" /> {loading ? 'Analyzing...' : `Predict Disease (${selectedSymptoms.length} symptoms)`}
           </button>
         </div>
-        {loading && <div className="text-sm font-medium text-orange-400 mt-2">Generating insights...</div>}
+        {loading && <div className="text-sm font-medium text-orange-400 mt-2">Generating AI insights...</div>}
         {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
         {selectedSymptoms.length > 0 && (
           <div className="text-sm text-muted-foreground mt-2">

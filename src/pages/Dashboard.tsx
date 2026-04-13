@@ -25,7 +25,7 @@ export default function Dashboard() {
 
       {/* Cards */}
       <section className="flex-1 px-4 pb-16">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           <ModuleCard3D
             module="student"
             title="Student Excellence"

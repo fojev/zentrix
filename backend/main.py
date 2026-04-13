@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
+import json
+import database
 
 from schema import Student, Finance, Disease
-import database
+from ai_service import get_student_suggestion, get_finance_suggestion, get_disease_suggestion
 
 from models.student_model import predict_student
 from models.finance_model import analyze_finance
@@ -19,117 +22,181 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def maintain_record_limit(user_id: str, table_name: str, limit: int = 5):
+    """Keep only the latest `limit` records per user in `table_name`."""
+    try:
+        database.cursor.execute(f"""
+            DELETE FROM {table_name} 
+            WHERE id NOT IN (
+                SELECT id FROM {table_name} 
+                WHERE user_id = ? 
+                ORDER BY id DESC LIMIT ?
+            ) AND user_id = ?
+        """, (user_id, limit, user_id))
+        database.conn.commit()
+    except Exception as e:
+        print(f"Error maintaining limits: {e}")
+
 @app.get("/")
 def home():
     return {"message": "Zentrix Backend Running 🚀"}
 
 # 🎓 STUDENT
 @app.post("/add-student")
-def add_student(data: Student):
+def add_student(data: Student, x_user_id: Optional[str] = Header(None)):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-ID header missing")
+        
     try:
         prediction_result = predict_student(data.marks, data.attendance, data.studyHours)
+        
+        # AI Suggestion
+        cat = prediction_result.get("category", "Unknown")
+        ai_suggestion = get_student_suggestion(data.marks, data.attendance, data.studyHours, cat)
+        
+        # Save to DB
+        database.cursor.execute("""
+            INSERT INTO students (user_id, name, subject, marks, attendance, study_hours, prediction, category, ai_suggestion)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (x_user_id, data.name, data.subject, data.marks, data.attendance, data.studyHours, 
+              prediction_result.get("avgScore"), cat, ai_suggestion))
+        database.conn.commit()
+        inserted_id = database.cursor.lastrowid
+        
+        maintain_record_limit(x_user_id, "students", 5)
+        
         student_record = data.dict()
         student_record.update(prediction_result)
-        
-        # Assign unique ID
-        student_record["id"] = database.student_id_counter
-        database.student_id_counter += 1
-        
-        # Rule-based ML Suggestion
-        cat = prediction_result.get("category", "Unknown")
-        if data.attendance < 75:
-            adv = "Improving your attendance is critical to better performance."
-        elif data.studyHours < 3:
-            adv = "Increasing your study hours will directly boost your projected score."
-        else:
-            adv = "Keep maintaining your current positive habits."
-        
-        student_record["ai_suggestion"] = f"Based on your current metrics (Marks: {data.marks}, Attendance: {data.attendance}%, Study: {data.studyHours}h), the ML model categorizes you as '{cat}'. {adv}"
-        
-        database.students_db.append(student_record)
+        student_record["id"] = inserted_id
+        student_record["ai_suggestion"] = ai_suggestion
         return student_record
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/students")
-def get_students():
-    return database.students_db
-
-@app.put("/student/{student_id}")
-def update_student(student_id: int, data: Student):
+def get_students(x_user_id: Optional[str] = Header(None)):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-ID header missing")
+        
     try:
-        for i, s in enumerate(database.students_db):
-            if s.get("id") == student_id:
-                prediction_result = predict_student(data.marks, data.attendance, data.studyHours)
-                updated_record = data.dict()
-                updated_record.update(prediction_result)
-                updated_record["id"] = student_id
-                
-                cat = prediction_result.get("category", "Unknown")
-                if data.attendance < 75:
-                    adv = "Improving your attendance is critical to better performance."
-                elif data.studyHours < 3:
-                    adv = "Increasing your study hours will directly boost your projected score."
-                else:
-                    adv = "Keep maintaining your current positive habits."
-                
-                updated_record["ai_suggestion"] = f"Based on your updated metrics (Marks: {data.marks}, Attendance: {data.attendance}%, Study: {data.studyHours}h), the ML model categorizes you as '{cat}'. {adv}"
-                
-                database.students_db[i] = updated_record
-                return updated_record
-        raise HTTPException(status_code=404, detail="Student not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.delete("/student/{student_id}")
-def delete_student(student_id: int):
-    try:
-        for i, s in enumerate(database.students_db):
-            if s.get("id") == student_id:
-                database.students_db.pop(i)
-                return {"message": "Student deleted successfully"}
-        raise HTTPException(status_code=404, detail="Student not found")
+        database.cursor.execute("""
+            SELECT id, name, subject, marks, attendance, study_hours, prediction, category, ai_suggestion
+            FROM students WHERE user_id = ? ORDER BY id ASC
+        """, (x_user_id,))
+        rows = database.cursor.fetchall()
+        
+        results = []
+        for row in rows:
+            record = {
+                "id": row[0],
+                "name": row[1],
+                "subject": row[2],
+                "marks": row[3],
+                "attendance": row[4],
+                "studyHours": row[5],
+                "avgScore": row[6],
+                "lrScore": row[6],  # Approximate/mock for simple parity
+                "rfScore": row[6],  # Approximate/mock for simple parity
+                "category": row[7],
+                "ai_suggestion": row[8],
+                "suggestions": [] # For legacy compatibility with UI expecting array
+            }
+            results.append(record)
+        return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 # 💰 FINANCE
 @app.post("/finance")
-def finance(data: Finance):
+def finance(data: Finance, x_user_id: Optional[str] = Header(None)):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-ID header missing")
+        
     try:
         analysis_result = analyze_finance(data.income, data.expenses)
         
         savings = analysis_result["savings"]
         rate = analysis_result["savings_rate"]
         
-        if savings < 0:
-            adv = "You are currently running a deficit. Immediate expense reduction is recommended."
-        elif rate < 20:
-            adv = "Try following the 50/30/20 rule to safely increase your savings rate."
-        else:
-            adv = "You have a healthy savings rate. Consider investing your surplus into index funds."
-            
-        analysis_result["ai_suggestion"] = f"Based on your Income (${data.income}) and total Expenses (${analysis_result['total_expense']}), your ML projected savings are ${savings}. {adv}"
+        # AI Suggestion
+        ai_suggestion = get_finance_suggestion(data.income, analysis_result["total_expense"], savings, rate)
         
-        database.finance_db.append(analysis_result)
+        # Insert
+        database.cursor.execute("""
+            INSERT INTO finance (user_id, income, total_expense, savings, savings_rate, suggestion, ai_suggestion)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (x_user_id, data.income, analysis_result["total_expense"], savings, rate, json.dumps(analysis_result.get("suggestions", [])), ai_suggestion))
+        database.conn.commit()
+        
+        maintain_record_limit(x_user_id, "finance", 5)
+        
+        analysis_result["ai_suggestion"] = ai_suggestion
         return analysis_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/finance/history")
+def get_finance_history(x_user_id: Optional[str] = Header(None)):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-ID header missing")
+        
+    try:
+        database.cursor.execute("""
+            SELECT id, income, total_expense, savings, ai_suggestion
+            FROM finance WHERE user_id = ? ORDER BY id ASC
+        """, (x_user_id,))
+        rows = database.cursor.fetchall()
+        
+        results = []
+        # Generate generic months based on the number of historic items to simulate a trend line easily
+        months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        current_month_index = len(rows)
+        
+        for i, row in enumerate(rows):
+            month_label = months[i % 12]
+            record = {
+                "id": row[0],
+                "month": month_label,
+                "Income": row[1],
+                "Expenses": row[2],
+                "Savings": row[3],
+                "ai_suggestion": row[4]
+            }
+            results.append(record)
+            
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # 🏥 DISEASE
 @app.post("/disease")
-def disease(data: Disease):
+def disease(data: Disease, x_user_id: Optional[str] = Header(None)):
+    if not x_user_id:
+        raise HTTPException(status_code=400, detail="X-User-ID header missing")
+        
     try:
         disease_name, dos, donts = predict_disease(data.symptoms)
         
-        suggestion = f"Based on your selected symptoms, the ML classification model predicts a possible condition of '{disease_name}'. Please ensure you follow the recommended precautions and seek professional medical advice if symptoms persist."
+        # AI Suggestion
+        ai_suggestion = get_disease_suggestion(data.symptoms, disease_name, dos, donts)
+        
+        # Insert
+        database.cursor.execute("""
+            INSERT INTO disease (user_id, symptoms, prediction, dos, donts, ai_suggestion)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (x_user_id, json.dumps(data.symptoms), disease_name, json.dumps(dos), json.dumps(donts), ai_suggestion))
+        database.conn.commit()
+        
+        maintain_record_limit(x_user_id, "disease", 5)
         
         result = {
             "disease": disease_name,
             "dos": dos,
             "donts": donts,
-            "ai_suggestion": suggestion
+            "ai_suggestion": ai_suggestion
         }
-        database.disease_db.append(result)
         return result
     except Exception as e:
+        print(f"Disease Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

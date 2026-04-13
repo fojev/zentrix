@@ -31,21 +31,23 @@ export default function ModuleCard3D({ module, title, description, to, delay }: 
   };
 
   return (
-    <Link to={to} className="block" style={{ animationDelay: `${delay}ms` }}>
+    <Link to={to} className="block h-full" style={{ animationDelay: `${delay}ms` }}>
       <div
         ref={ref}
         onMouseMove={handleMouse}
         onMouseLeave={() => setTransform('')}
-        className={`glass-card rounded-2xl p-8 transition-all duration-300 cursor-pointer group animate-fade-in-up bg-gradient-to-br ${gradients[module]} hover:shadow-xl`}
+        className={`glass-card rounded-2xl p-8 transition-all duration-300 cursor-pointer group animate-fade-in-up bg-gradient-to-br ${gradients[module]} hover:shadow-xl h-full min-h-[220px] flex flex-col justify-between`}
         style={{ transform, transformStyle: 'preserve-3d', willChange: 'transform' }}
       >
-        <div className="mb-6" style={{ transform: 'translateZ(40px)' }}>
-          <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${gradients[module]} flex items-center justify-center animate-pulse-glow`}>
-            <Icon className={`w-8 h-8 ${iconColors[module]}`} />
+        <div>
+          <div className="mb-6" style={{ transform: 'translateZ(40px)' }}>
+            <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${gradients[module]} flex items-center justify-center animate-pulse-glow`}>
+              <Icon className={`w-8 h-8 ${iconColors[module]}`} />
+            </div>
           </div>
+          <h3 className="text-xl font-bold mb-2 text-foreground" style={{ transform: 'translateZ(30px)' }}>{title}</h3>
+          <p className="text-muted-foreground text-sm mb-6" style={{ transform: 'translateZ(20px)' }}>{description}</p>
         </div>
-        <h3 className="text-xl font-bold mb-2 text-foreground" style={{ transform: 'translateZ(30px)' }}>{title}</h3>
-        <p className="text-muted-foreground text-sm mb-6" style={{ transform: 'translateZ(20px)' }}>{description}</p>
         <div className="flex items-center gap-2 text-primary font-medium text-sm group-hover:gap-3 transition-all" style={{ transform: 'translateZ(25px)' }}>
           Explore <ArrowRight className="w-4 h-4" />
         </div>

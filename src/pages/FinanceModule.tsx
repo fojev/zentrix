@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Upload, FileDown, Sparkles, Wallet } from 'lucide-react';
 import Papa from 'papaparse';
 import { exportFinanceReport } from '@/lib/pdfExport';
 
-import { BASE_URL } from '../config/api';
+import { BASE_URL, getUserId } from '../config/api';
 
 const COLORS = ['#8b5cf6','#10b981','#f59e0b','#ef4444','#3b82f6','#ec4899','#06b6d4','#84cc16','#a855f7'];
 const defaultCategories = ['Housing','Food','Transportation','Utilities','Entertainment','Healthcare','Education','Savings','Other'];
@@ -13,9 +13,27 @@ export default function FinanceModule() {
   const [income, setIncome] = useState<number>(0);
   const [expenses, setExpenses] = useState<Record<string, number>>({});
   const [analysis, setAnalysis] = useState<any>(null);
+  const [trendData, setTrendData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/finance/history`, {
+        headers: { 'X-User-ID': getUserId() }
+      });
+      if (!res.ok) throw new Error("Failed to fetch history");
+      const data = await res.json();
+      setTrendData(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const performAnalysis = async () => {
     try {
@@ -23,12 +41,16 @@ export default function FinanceModule() {
       setError(null);
       const res = await fetch(`${BASE_URL}/finance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-User-ID': getUserId()
+        },
         body: JSON.stringify({ income, expenses })
       });
+      if (!res.ok) throw new Error("Server not responding");
       const data = await res.json();
-      console.log("Finance API Response:", data);
       setAnalysis(data);
+      fetchHistory(); // Refresh charts after new prediction
     } catch (err) {
       console.error("Failed to analyze finances", err);
       setError("Server not responding");
@@ -53,16 +75,6 @@ export default function FinanceModule() {
   };
 
   const pieData = Object.entries(expenses).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  const trendData = analysis ? Array.from({ length: 6 }, (_, i) => {
-    const month = new Date(2024, i).toLocaleString('default', { month: 'short' });
-    const variation = 0.9 + Math.random() * 0.2;
-    return { 
-        month, 
-        Income: Math.round(income * variation), 
-        Expenses: Math.round(analysis.total_expense * variation), 
-        Savings: Math.round(analysis.savings * variation) 
-    };
-  }) : [];
 
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-6 animate-fade-in-up">
@@ -80,7 +92,7 @@ export default function FinanceModule() {
       <div className="glass-card rounded-xl p-6 space-y-4">
         <h2 className="font-semibold text-foreground">Financial Data</h2>
         <div>
-          <label className="text-sm text-muted-foreground">Monthly Income ($)</label>
+          <label className="text-sm text-muted-foreground">Monthly Income (₹)</label>
           <input type="number" value={income || ''} onChange={e => setIncome(+e.target.value)}
             className="w-full px-3 py-2 mt-1 rounded-lg bg-muted text-foreground text-sm border border-border focus:ring-2 focus:ring-primary/50 outline-none" />
         </div>
@@ -106,7 +118,7 @@ export default function FinanceModule() {
             <Sparkles className="w-4 h-4" /> {loading ? 'Analyzing...' : 'Analyze Finances'}
           </button>
         </div>
-        {loading && <div className="text-sm font-medium text-emerald-400 mt-2">Generating insights...</div>}
+        {loading && <div className="text-sm font-medium text-emerald-400 mt-2">Generating AI insights...</div>}
         {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
       </div>
 
@@ -115,9 +127,9 @@ export default function FinanceModule() {
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Income', value: `$${analysis.income.toLocaleString()}`, color: 'text-emerald-400' },
-              { label: 'Expenses', value: `$${analysis.total_expense.toLocaleString()}`, color: 'text-rose-400' },
-              { label: 'Savings', value: `$${analysis.savings.toLocaleString()}`, color: analysis.savings >= 0 ? 'text-blue-400' : 'text-rose-400' },
+              { label: 'Income', value: `₹${analysis.income.toLocaleString('en-IN')}`, color: 'text-emerald-400' },
+              { label: 'Expenses', value: `₹${analysis.total_expense.toLocaleString('en-IN')}`, color: 'text-rose-400' },
+              { label: 'Savings', value: `₹${analysis.savings.toLocaleString('en-IN')}`, color: analysis.savings >= 0 ? 'text-blue-400' : 'text-rose-400' },
               { label: 'Savings Rate', value: `${analysis.savings_rate.toFixed(1)}%`, color: analysis.savings_rate >= 20 ? 'text-emerald-400' : 'text-amber-400' },
             ].map(m => (
               <div key={m.label} className="glass-card rounded-xl p-4 text-center">
@@ -139,8 +151,9 @@ export default function FinanceModule() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
+            
             <div className="glass-card rounded-xl p-6">
-              <h2 className="font-semibold text-foreground mb-4">6-Month Trend</h2>
+              <h2 className="font-semibold text-foreground mb-4">Historical Trend</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -154,6 +167,7 @@ export default function FinanceModule() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            
           </div>
 
           {/* Suggestions */}
@@ -162,18 +176,11 @@ export default function FinanceModule() {
               <h2 className="font-semibold text-foreground flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-emerald-400" /> AI Suggestions
               </h2>
-              <button onClick={() => exportFinanceReport({ income: analysis.income, expenses, totalExpenses: analysis.total_expense, savings: analysis.savings, savingsRate: analysis.savings_rate, suggestions: analysis.suggestions })}
+              <button onClick={() => exportFinanceReport({ income: analysis.income, expenses, totalExpenses: analysis.total_expense, savings: analysis.savings, savingsRate: analysis.savings_rate, suggestions: analysis.suggestions || [] })}
                 className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition flex items-center gap-2">
                 <FileDown className="w-4 h-4" /> Download PDF
               </button>
             </div>
-            <ul className="space-y-2 mb-6">
-              {analysis.suggestions.map((s: string, i: number) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <span className="text-emerald-400 mt-0.5">•</span> {s}
-                </li>
-              ))}
-            </ul>
 
             {analysis.ai_suggestion && (
               <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 relative overflow-hidden group">
