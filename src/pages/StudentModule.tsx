@@ -35,6 +35,7 @@ export default function StudentModule() {
         throw new Error(errData.detail || "Server not responding");
       }
       const newStudent = await res.json();
+      console.log("Prediction API Response (addStudent):", newStudent);
       
       setForm({ name: '', subject: '', marks: 0, maxMarks: 100, attendance: 0, studyHours: 0 });
       setResults(prev => [...prev, newStudent]);
@@ -70,6 +71,7 @@ export default function StudentModule() {
             });
             if (res.ok) {
                 const newStudent = await res.json();
+                console.log("Prediction API Response (CSV):", newStudent);
                 setResults(prev => [...prev, newStudent]);
             }
           } catch (e) {
@@ -137,15 +139,15 @@ export default function StudentModule() {
                   <div className="text-sm text-muted-foreground truncate">{r.subject}</div>
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex flex-col">
-                       <span className="text-lg font-bold gradient-text">{r.prediction.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">Pts</span></span>
-                       <span className="text-xs text-muted-foreground">{((r.marks / r.maxMarks) * 100).toFixed(1)}% | {r.confidence}% Confidence</span>
+                       <span className="text-lg font-bold gradient-text">{r?.prediction?.toFixed(1) ?? '0.0'} <span className="text-sm font-normal text-muted-foreground">Pts</span></span>
+                       <span className="text-xs text-muted-foreground">{r?.marks && r?.maxMarks ? ((r.marks / r.maxMarks) * 100).toFixed(1) : '0.0'}% | {r?.confidence ?? 0}% Confidence</span>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      r.prediction >= 80 ? 'bg-emerald-500/20 text-emerald-400' :
-                      r.prediction >= 60 ? 'bg-blue-500/20 text-blue-400' :
-                      r.prediction >= 40 ? 'bg-amber-500/20 text-amber-400' :
+                      (r?.prediction ?? 0) >= 80 ? 'bg-emerald-500/20 text-emerald-400' :
+                      (r?.prediction ?? 0) >= 60 ? 'bg-blue-500/20 text-blue-400' :
+                      (r?.prediction ?? 0) >= 40 ? 'bg-amber-500/20 text-amber-400' :
                       'bg-rose-500/20 text-rose-400'
-                    }`}>{r.prediction >= 80 ? 'Excellent' : r.prediction >= 60 ? 'Good' : r.prediction >= 40 ? 'Average' : 'Poor'}</span>
+                    }`}>{(r?.prediction ?? 0) >= 80 ? 'Excellent' : (r?.prediction ?? 0) >= 60 ? 'Good' : (r?.prediction ?? 0) >= 40 ? 'Average' : 'Poor'}</span>
                   </div>
                 </button>
               ))}
@@ -161,7 +163,7 @@ export default function StudentModule() {
                     <h2 className="font-semibold text-foreground text-lg">{selectedResult.name}'s Output</h2>
                     <p className="text-sm text-muted-foreground">AI Breakdown ({selectedResult.confidence}% Confidence Analysis)</p>
                   </div>
-                  <button onClick={() => exportStudentReport({ ...selectedResult, predictedScore: selectedResult.prediction, suggestions: selectedResult.ai_suggestions })}
+                  <button onClick={() => exportStudentReport({ ...selectedResult, predictedScore: selectedResult?.prediction ?? 0, suggestions: selectedResult?.ai_suggestions ?? [] })}
                     className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition flex items-center gap-2">
                     <FileDown className="w-4 h-4" /> Download PDF
                   </button>
@@ -169,17 +171,19 @@ export default function StudentModule() {
                 
                 <div className="mb-4 p-4 rounded-lg bg-primary/5 border border-primary/20 text-sm leading-relaxed text-foreground">
                   <strong className="text-primary block mb-1">AI Analysis:</strong>
-                  {selectedResult.ai_analysis}
+                  {selectedResult?.ai_analysis || "No analysis available"}
                 </div>
 
                 <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> AI Suggestions:</h3>
                 <ul className="space-y-3 mb-2 flex-grow">
-                  {selectedResult.ai_suggestions.map((s, i) => (
+                  {selectedResult?.ai_suggestions?.length ? selectedResult.ai_suggestions.map((s, i) => (
                     <li key={i} className="flex items-start gap-3 bg-muted/40 p-3 rounded-lg border border-border/50 text-sm">
                       <span className="text-primary font-bold mt-0.5 opacity-80">{i + 1}.</span> 
                       <span className="text-foreground leading-relaxed">{s}</span>
                     </li>
-                  ))}
+                  )) : (
+                    <li className="text-sm text-muted-foreground italic">No suggestions available</li>
+                  )}
                 </ul>
               </div>
 
