@@ -4,7 +4,7 @@ import { Upload, FileDown, TrendingUp, Sparkles } from 'lucide-react';
 import Papa from 'papaparse';
 import { exportStudentReport } from '@/lib/pdfExport';
 
-import { BASE_URL } from '../config/api';
+import { BASE_URL, getUserId } from '../config/api';
 
 interface Student { name: string; subject: string; marks: number; maxMarks: number; attendance: number; studyHours: number; }
 interface Result extends Student { percentage: number; score: number; category: string; suggestions: string[]; confidence: number; }
@@ -22,12 +22,18 @@ export default function StudentModule() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${BASE_URL}/add-student`, {
+      const res = await fetch(`${BASE_URL}/predict`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-User-ID': getUserId()
+        },
         body: JSON.stringify(form)
       });
-      if (!res.ok) throw new Error("Server not responding");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Server not responding");
+      }
       const newStudent = await res.json();
       
       setForm({ name: '', subject: '', marks: 0, maxMarks: 100, attendance: 0, studyHours: 0 });
@@ -54,9 +60,12 @@ export default function StudentModule() {
         
         for (const student of parsed) {
           try {
-            const res = await fetch(`${BASE_URL}/add-student`, {
+            const res = await fetch(`${BASE_URL}/predict`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'X-User-ID': getUserId()
+              },
               body: JSON.stringify(student)
             });
             if (res.ok) {

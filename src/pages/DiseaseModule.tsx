@@ -52,7 +52,10 @@ export default function DiseaseModule() {
         },
         body: JSON.stringify({ symptoms: selectedSymptoms })
       });
-      if (!res.ok) throw new Error("Server not responding");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Server not responding");
+      }
       const data = await res.json();
       console.log("Disease API Response:", data);
       setResult(data);

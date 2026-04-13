@@ -24,8 +24,8 @@ def home():
     return {"message": "Zentrix Backend Running 🚀"}
 
 # 🎓 STUDENT
-@app.post("/add-student")
-def add_student(data: Student, x_user_id: Optional[str] = Header(None)):
+@app.post("/predict")
+def predict_student_endpoint(data: Student, x_user_id: Optional[str] = Header(None)):
     if not x_user_id:
         raise HTTPException(status_code=400, detail="X-User-ID header missing")
     try:

@@ -30,7 +30,10 @@ export default function FinanceModule() {
         },
         body: JSON.stringify({ income, expenses })
       });
-      if (!res.ok) throw new Error("Server not responding");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Server not responding");
+      }
       const data = await res.json();
       setAnalysis(data);
       
