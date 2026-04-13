@@ -14,7 +14,7 @@ import { BASE_URL, getUserId } from '../config/api';
 
 export default function DiseaseModule() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [result, setResult] = useState<{ disease: string; dos: string[]; donts: string[]; ai_suggestion?: string } | null>(null);
+  const [result, setResult] = useState<{ disease: string; dos: string[]; donts: string[]; } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -110,7 +110,7 @@ export default function DiseaseModule() {
             <Sparkles className="w-4 h-4" /> {loading ? 'Analyzing...' : `Predict Disease (${selectedSymptoms.length} symptoms)`}
           </button>
         </div>
-        {loading && <div className="text-sm font-medium text-orange-400 mt-2">Generating AI insights...</div>}
+        {loading && <div className="text-sm font-medium text-orange-400 mt-2">Analyzing symptoms...</div>}
         {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
         {selectedSymptoms.length > 0 && (
           <div className="text-sm text-muted-foreground mt-2">
@@ -126,18 +126,6 @@ export default function DiseaseModule() {
             <div className="text-sm text-muted-foreground mb-2">Predicted Condition</div>
             <div className="text-3xl font-bold text-rose-400 mb-1">{result.disease}</div>
             <div className="text-sm text-muted-foreground mb-4">Based on your symptoms</div>
-            
-            <div className="mt-4 p-4 rounded-xl bg-orange-500/5 border border-orange-500/20 relative overflow-hidden group text-left">
-              <div className="absolute top-0 right-0 p-2 opacity-10">
-                <Sparkles className="w-8 h-8 text-orange-400" />
-              </div>
-              <h3 className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4" /> Personalized Advice
-              </h3>
-              <p className="text-sm text-foreground leading-relaxed relative z-10">
-                {result?.ai_suggestion}
-              </p>
-            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6">

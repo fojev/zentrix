@@ -15,7 +15,7 @@ export default function Navbar() {
   return (
     <nav className="glass-card sticky top-0 z-50 px-6 py-3 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-2">
-        <img src={logo} alt="Zentrix Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
+        <img src={logo} alt="Zentrix Logo" className="h-8 w-auto object-contain" />
         <span className="font-bold text-lg gradient-text hidden sm:inline">ZENTRIX</span>
       </Link>
       <div className="flex items-center gap-1 sm:gap-2">

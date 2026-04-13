@@ -1,34 +1,45 @@
-def analyze_finance(income, expenses):
-    total_expense = sum(expenses.values())
-    savings = income - total_expense
-    savings_rate = (savings / income * 100) if income > 0 else 0
+import numpy as np
+from sklearn.linear_model import LinearRegression
 
-    suggestions = []
+# --- SYNTHETIC DATASET CREATION ---
+np.random.seed(42)
+X_train_fin = []
+y_train_fin = []
+
+for _ in range(150):
+    income = np.random.uniform(1000, 15000)
+    expenses = np.random.uniform(500, income + 1000) # sometimes overspending
+    savings = income - expenses
     
-    if savings_rate < 10:
-        suggestions.append("Your savings rate is below 10%. Try the 50/30/20 rule: 50% needs, 30% wants, 20% savings.")
-    if savings_rate < 0:
-        suggestions.append("⚠️ You are overspending. Immediately review and cut non-essential expenses.")
-    elif savings_rate >= 20:
-        suggestions.append("Great savings rate! Consider investing in index funds or retirement accounts.")
+    X_train_fin.append([income, expenses])
+    y_train_fin.append(savings)
 
-    # High expense detection
-    for cat, val in expenses.items():
-        if val / income > 0.3:
-            suggestions.append(f"{cat} takes {(val / income * 100):.0f}% of your income. Look for ways to reduce this.")
-            
-    if expenses.get('Entertainment', 0) / income > 0.1:
-        suggestions.append("Entertainment spending is high. Set a monthly entertainment budget.")
-    if expenses.get('Food', 0) / income > 0.15:
-        suggestions.append("Consider meal planning and cooking at home to reduce food expenses.")
+# --- TRAIN SCENE ---
+lr_finance = LinearRegression()
+lr_finance.fit(X_train_fin, y_train_fin)
 
-    if not suggestions:
-        suggestions.append("Your finances look healthy! Keep tracking and stay disciplined.")
-
+def analyze_finance(income, expenses_dict):
+    total_expense = sum(expenses_dict.values())
+    
+    # Model predict savings
+    input_data = np.array([[income, total_expense]])
+    predicted_savings = lr_finance.predict(input_data)[0]
+    
+    # Calculate accurate rate tracking based on the prediction
+    savings_rate = (predicted_savings / income * 100) if income > 0 else 0
+    
+    suggestions = []
+    if predicted_savings < 0:
+        suggestions.append("Your expenses exceed income, reduce spending immediately.")
+    if savings_rate < 20 and predicted_savings >= 0:
+        suggestions.append("Try to save at least 20% of your income.")
+    if predicted_savings > 0 and savings_rate >= 20:
+        suggestions.append("Your financial health is stable. Consider long term investments.")
+        
     return {
-        "income": income,
-        "total_expense": total_expense,
-        "savings": savings,
-        "savings_rate": round(savings_rate, 1),
+        "income": float(income),
+        "total_expense": float(total_expense),
+        "savings": round(float(predicted_savings), 2),
+        "savings_rate": round(float(savings_rate), 1),
         "suggestions": suggestions
     }

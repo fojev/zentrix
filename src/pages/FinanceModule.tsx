@@ -18,23 +18,6 @@ export default function FinanceModule() {
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
-    try {
-      const res = await fetch(`${BASE_URL}/finance/history`, {
-        headers: { 'X-User-ID': getUserId() }
-      });
-      if (!res.ok) throw new Error("Failed to fetch history");
-      const data = await res.json();
-      setTrendData(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const performAnalysis = async () => {
     try {
       setLoading(true);
@@ -50,7 +33,17 @@ export default function FinanceModule() {
       if (!res.ok) throw new Error("Server not responding");
       const data = await res.json();
       setAnalysis(data);
-      fetchHistory(); // Refresh charts after new prediction
+      
+      setTrendData(prev => {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const nextMonth = months[prev.length % 12];
+        return [...prev, {
+          month: nextMonth,
+          Income: data.income,
+          Expenses: data.total_expense,
+          Savings: data.savings
+        }];
+      });
     } catch (err) {
       console.error("Failed to analyze finances", err);
       setError("Server not responding");
@@ -118,7 +111,7 @@ export default function FinanceModule() {
             <Sparkles className="w-4 h-4" /> {loading ? 'Analyzing...' : 'Analyze Finances'}
           </button>
         </div>
-        {loading && <div className="text-sm font-medium text-emerald-400 mt-2">Generating AI insights...</div>}
+        {loading && <div className="text-sm font-medium text-emerald-400 mt-2">Analyzing finances...</div>}
         {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
       </div>
 
@@ -174,27 +167,21 @@ export default function FinanceModule() {
           <div className="glass-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-400" /> AI Suggestions
+                <Sparkles className="w-5 h-5 text-emerald-400" /> ML Suggestions
               </h2>
               <button onClick={() => exportFinanceReport({ income: analysis.income, expenses, totalExpenses: analysis.total_expense, savings: analysis.savings, savingsRate: analysis.savings_rate, suggestions: analysis.suggestions || [] })}
                 className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition flex items-center gap-2">
                 <FileDown className="w-4 h-4" /> Download PDF
               </button>
             </div>
-
-            {analysis.ai_suggestion && (
-              <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-2 opacity-10">
-                  <Sparkles className="w-8 h-8 text-emerald-400" />
-                </div>
-                <h3 className="text-sm font-semibold text-emerald-400 flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4" /> Personalized Advice
-                </h3>
-                <p className="text-sm text-foreground leading-relaxed relative z-10">
-                  {analysis?.ai_suggestion}
-                </p>
-              </div>
-            )}
+            <ul className="space-y-3 mb-6">
+               {(analysis.suggestions || []).map((s: string, i: number) => (
+                  <li key={i} className="flex items-start gap-3 bg-muted/30 p-3 rounded-lg border border-border/50 text-sm">
+                    <span className="text-emerald-400 font-bold mt-0.5 opacity-80">{i + 1}.</span> 
+                    <span className="text-foreground leading-relaxed">{s}</span>
+                  </li>
+                ))}
+            </ul>
           </div>
         </>
       )}

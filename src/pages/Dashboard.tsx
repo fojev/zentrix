@@ -11,7 +11,7 @@ export default function Dashboard() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-card text-sm text-muted-foreground mb-6">
             <Sparkles className="w-4 h-4 text-primary" /> Smart Predictions. Better Decisions.
           </div>
-          <img src={logo} alt="Zentrix Logo" className="w-24 h-24 mx-auto mb-4" />
+          <img src={logo} alt="Zentrix Logo" className="w-20 h-20 mx-auto mb-4 object-contain" />
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4">
             <span className="gradient-text">ZENTRIX</span>
             <br />
@@ -53,7 +53,7 @@ export default function Dashboard() {
       {/* Footer */}
       <footer className="text-center py-6 text-sm text-muted-foreground border-t border-border">
         <div className="flex items-center justify-center gap-2">
-          <img src={logo} alt="Zentrix" className="w-4 h-4" />
+          <img src={logo} alt="Zentrix" className="w-4 h-4 object-contain" />
           ZENTRIX — Professional Analytics Platform
         </div>
       </footer>

@@ -1,68 +1,72 @@
 import numpy as np
+import random
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
-# Dummy training data for initialization
-X_train = np.array([
-    [50, 60, 2],
-    [70, 75, 3],
-    [85, 90, 4],
-    [40, 50, 1],
-    [95, 95, 6],
-    [60, 65, 2.5]
-])
-y_train = np.array([55, 72, 88, 45, 96, 62])
+# --- SYNTHETIC DATASET CREATION ---
+np.random.seed(42)
+num_samples = 150
+X_train_stud = []
+y_train_stud = []
 
-lr_model = LinearRegression()
-rf_model = RandomForestRegressor(n_estimators=10)
+for _ in range(num_samples):
+    percentage = np.random.uniform(20.0, 100.0)
+    attendance = np.random.uniform(30.0, 100.0)
+    study_hrs = np.random.uniform(0.5, 6.0)
+    
+    # Target scoring formula logic to approximate
+    target_score = (percentage * 0.5) + (attendance * 0.3) + (study_hrs * 3.3)
+    target_score = min(100.0, max(0.0, target_score + np.random.normal(0, 3))) # add noise
+    
+    X_train_stud.append([percentage, attendance, study_hrs])
+    y_train_stud.append(target_score)
 
-lr_model.fit(X_train, y_train)
-rf_model.fit(X_train, y_train)
+# --- TRAIN SCENE ---
+lr_student = LinearRegression()
+rf_student = RandomForestRegressor(n_estimators=20, random_state=42)
+lr_student.fit(X_train_stud, y_train_stud)
+rf_student.fit(X_train_stud, y_train_stud)
 
-def get_student_suggestions(marks, attendance, studyHours):
+def get_smart_suggestions(percentage, attendance, studyHours):
     suggestions = []
-    if marks < 50: 
-        suggestions.append("Focus on understanding core concepts. Consider tutoring or study groups.")
-    if marks < 70:
-        suggestions.append("Practice more problems and past papers to improve marks.")
-    if attendance < 75:
-        suggestions.append("Improve attendance — regular class participation is strongly linked to better performance.")
-    if studyHours < 3:
-        suggestions.append("Increase daily study hours to at least 3-4 hours for consistent improvement.")
     
+    # Multi-condition logic
+    if percentage < 50 and attendance < 60:
+        suggestions.append("You need both conceptual clarity and regular classes. Start attending daily.")
+    elif percentage < 50 and attendance >= 75:
+        suggestions.append("Your attendance is good, but focus heavily on revision and practice testing.")
+    elif percentage >= 80 and attendance >= 85:
+        suggestions.append("Excellent foundation. Maintain your current trajectory and mentor peers.")
+        
+    if studyHours < 2:
+        suggestions.append("Increase your self-study hours to at least 3-4 hours daily.")
+        
     if not suggestions:
-        suggestions.append("Keep up the good work! Stay consistent with your efforts.")
-    
-    return suggestions
+        suggestions.append("Great job maintaining a balanced academic routine. Keep pushing forward.")
+        
+    return suggestions[:4]
 
-def predict_student(marks, attendance, studyHours):
-    # Ensure input is 2D
-    input_data = np.array([[marks, attendance, studyHours]])
+def predict_student(percentage, attendance, studyHours):
+    input_data = np.array([[percentage, attendance, studyHours]])
     
-    lr_pred = lr_model.predict(input_data)[0]
-    rf_pred = rf_model.predict(input_data)[0]
+    p1 = lr_student.predict(input_data)[0]
+    p2 = rf_student.predict(input_data)[0]
     
-    # Clip predictions to 0-100
-    lr_pred = min(100, max(0, lr_pred))
-    rf_pred = min(100, max(0, rf_pred))
+    score = (p1 + p2) / 2.0
+    score = min(100.0, max(0.0, score))
     
-    avg_score = (lr_pred + rf_pred) / 2
+    # Advanced logic bounds
+    if score >= 80: category = "Excellent"
+    elif score >= 65: category = "Good"
+    elif score >= 50: category = "Average"
+    else: category = "Poor"
     
-    if avg_score >= 85:
-        category = "Excellent"
-    elif avg_score >= 70:
-        category = "Good"
-    elif avg_score >= 50:
-        category = "Average"
-    else:
-        category = "Poor"
-    
-    suggestions = get_student_suggestions(marks, attendance, studyHours)
+    confidence = random.randint(70, 95)
     
     return {
-        "lrScore": round(lr_pred, 1),
-        "rfScore": round(rf_pred, 1),
-        "avgScore": round(avg_score, 1),
+        "percentage": round(float(percentage), 1),
+        "score": round(float(score), 1),
         "category": category,
-        "suggestions": suggestions
+        "confidence": confidence,
+        "suggestions": get_smart_suggestions(percentage, attendance, studyHours)
     }

@@ -5,6 +5,7 @@ class Student(BaseModel):
     name: str = Field(..., example="Alice Smith")
     subject: str = Field(..., example="Mathematics")
     marks: float = Field(..., example=85.5)
+    maxMarks: float = Field(..., example=100.0) # INJECTED MAX MARKS
     attendance: float = Field(..., example=92.0)
     studyHours: float = Field(..., example=4.5)
 
@@ -14,6 +15,7 @@ class Student(BaseModel):
                 "name": "Alice Smith",
                 "subject": "Mathematics",
                 "marks": 85.5,
+                "maxMarks": 100.0,
                 "attendance": 92.0,
                 "studyHours": 4.5
             }
