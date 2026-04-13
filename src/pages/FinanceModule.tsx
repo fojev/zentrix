@@ -25,6 +25,7 @@ export default function FinanceModule() {
         body: JSON.stringify({ income, expenses })
       });
       const data = await res.json();
+      console.log("Finance API Response:", data);
       setAnalysis(data);
     } catch (err) {
       console.error("Failed to analyze finances", err);
@@ -177,9 +178,11 @@ export default function FinanceModule() {
                 <h3 className="text-sm font-semibold text-emerald-400 flex items-center gap-2 mb-2">
                   <Sparkles className="w-4 h-4" /> Intelligent Savings Advice
                 </h3>
-                <p className="text-sm text-foreground leading-relaxed relative z-10">
-                  {analysis.ai_suggestion}
-                </p>
+                {loading ? (
+                  <p className="text-sm text-foreground leading-relaxed relative z-10">Generating AI insights...</p>
+                ) : (
+                  <p className="text-sm text-foreground leading-relaxed relative z-10">{analysis?.ai_suggestion || "No AI response"}</p>
+                )}
               </div>
             )}
           </div>

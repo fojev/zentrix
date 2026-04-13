@@ -44,6 +44,7 @@ export default function StudentModule() {
         body: JSON.stringify(form)
       });
       const newStudent = await res.json();
+      console.log("Add Student API Response:", newStudent);
       setStudents(prev => [...prev, newStudent]);
       setForm({ name: '', subject: '', marks: 0, attendance: 0, studyHours: 0 });
       fetchStudents(); // Refresh results
@@ -78,7 +79,7 @@ export default function StudentModule() {
     });
   };
 
-  const chartData = results.map(r => ({ name: r.name, 'Linear Reg': +r.lrScore.toFixed(1), 'Random Forest': +r.rfScore.toFixed(1), 'Average': +r.avgScore.toFixed(1) }));
+  const chartData = results.map(r => ({ name: r.name, 'Smart Score': +r.lrScore.toFixed(1), 'Advanced Insight': +r.rfScore.toFixed(1), 'Average': +r.avgScore.toFixed(1) }));
 
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-6 animate-fade-in-up">
@@ -116,6 +117,9 @@ export default function StudentModule() {
       {/* Data Table */}
       <div className="glass-card rounded-xl p-6 overflow-x-auto">
         <h2 className="font-semibold text-foreground mb-3">Student Data ({students.length})</h2>
+        {students.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No Data Available</div>
+        ) : (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-muted-foreground">
@@ -134,6 +138,7 @@ export default function StudentModule() {
             ))}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Results */}
@@ -149,8 +154,8 @@ export default function StudentModule() {
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))' }} />
                   <Legend />
-                  <Bar dataKey="Linear Reg" fill="hsl(250, 80%, 60%)" radius={[4,4,0,0]} />
-                  <Bar dataKey="Random Forest" fill="hsl(280, 70%, 60%)" radius={[4,4,0,0]} />
+                  <Bar dataKey="Smart Score" fill="hsl(250, 80%, 60%)" radius={[4,4,0,0]} />
+                  <Bar dataKey="Advanced Insight" fill="hsl(280, 70%, 60%)" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -163,8 +168,8 @@ export default function StudentModule() {
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))' }} />
                   <Legend />
-                  <Line type="monotone" dataKey="Linear Reg" stroke="hsl(250, 80%, 60%)" strokeWidth={2} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="Random Forest" stroke="hsl(280, 70%, 60%)" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="Smart Score" stroke="hsl(250, 80%, 60%)" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="Advanced Insight" stroke="hsl(280, 70%, 60%)" strokeWidth={2} dot={{ r: 4 }} />
                   <Line type="monotone" dataKey="Average" stroke="hsl(160, 70%, 50%)" strokeWidth={2} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -222,9 +227,11 @@ export default function StudentModule() {
                   <h3 className="text-sm font-semibold text-primary flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4" /> Intelligent AI Insight
                   </h3>
-                  <p className="text-sm text-foreground leading-relaxed relative z-10">
-                    {selectedResult.ai_suggestion}
-                  </p>
+                  {loading ? (
+                    <p className="text-sm text-foreground leading-relaxed relative z-10">Generating AI insights...</p>
+                  ) : (
+                    <p className="text-sm text-foreground leading-relaxed relative z-10">{selectedResult?.ai_suggestion || "No AI response"}</p>
+                  )}
                 </div>
               )}
             </div>

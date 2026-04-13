@@ -8,7 +8,7 @@ import database
 from models.student_model import predict_student
 from models.finance_model import analyze_finance
 from models.disease_model import predict_disease
-from utils.ai_helper import generate_ai_suggestion
+from utils.ai_service import generate_gemini_suggestion
 
 app = FastAPI()
 
@@ -38,7 +38,7 @@ def add_student(data: Student):
         database.student_id_counter += 1
         
         # Add AI Suggestion
-        student_record["ai_suggestion"] = generate_ai_suggestion("student", data.dict())
+        student_record["ai_suggestion"] = generate_gemini_suggestion("student", student_record)
         
         database.students_db.append(student_record)
         return student_record
@@ -60,7 +60,7 @@ def update_student(student_id: int, data: Student):
                 updated_record["id"] = student_id
                 
                 # Add AI Suggestion
-                updated_record["ai_suggestion"] = generate_ai_suggestion("student", data.dict())
+                updated_record["ai_suggestion"] = generate_gemini_suggestion("student", updated_record)
                 
                 database.students_db[i] = updated_record
                 return updated_record
@@ -86,7 +86,9 @@ def finance(data: Finance):
         analysis_result = analyze_finance(data.income, data.expenses)
         
         # Add AI Suggestion
-        analysis_result["ai_suggestion"] = generate_ai_suggestion("finance", data.dict())
+        
+        combined_finance = {**data.dict(), **analysis_result}
+        analysis_result["ai_suggestion"] = generate_gemini_suggestion("finance", combined_finance)
         
         database.finance_db.append(analysis_result)
         return analysis_result
@@ -102,7 +104,12 @@ def disease(data: Disease):
             "disease": disease_name,
             "dos": dos,
             "donts": donts,
-            "ai_suggestion": generate_ai_suggestion("disease", data.dict())
+            "ai_suggestion": generate_gemini_suggestion("disease", {
+                **data.dict(),
+                "predicted_disease": disease_name,
+                "suggested_dos": dos,
+                "suggested_donts": donts
+            })
         }
         database.disease_db.append(result)
         return result
