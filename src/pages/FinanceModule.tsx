@@ -170,7 +170,7 @@ export default function FinanceModule() {
           <div className="glass-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-400" /> ML Suggestions
+                <Sparkles className="w-5 h-5 text-emerald-400" /> AI Suggestions
               </h2>
               <button onClick={() => exportFinanceReport({ income: analysis.income, expenses, totalExpenses: analysis.total_expense, savings: analysis.savings, savingsRate: analysis.savings_rate, suggestions: analysis.suggestions || [] })}
                 className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition flex items-center gap-2">

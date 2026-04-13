@@ -7,7 +7,7 @@ import { exportStudentReport } from '@/lib/pdfExport';
 import { BASE_URL, getUserId } from '../config/api';
 
 interface Student { name: string; subject: string; marks: number; maxMarks: number; attendance: number; studyHours: number; }
-interface Result extends Student { percentage: number; score: number; category: string; suggestions: string[]; confidence: number; }
+interface Result extends Student { prediction: number; ai_analysis: string; ai_suggestions: string[]; confidence: number; }
 
 export default function StudentModule() {
   const [form, setForm] = useState<Student>({ name: '', subject: '', marks: 0, maxMarks: 100, attendance: 0, studyHours: 0 });
@@ -108,7 +108,7 @@ export default function StudentModule() {
         </div>
         <div className="flex gap-3 flex-wrap">
           <button onClick={addStudent} disabled={loading} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition disabled:opacity-50">
-            {loading ? 'Executing Model...' : 'Predict Performance'}
+            {loading ? 'Executing AI Engine...' : 'Predict Performance'}
           </button>
           <button onClick={() => fileRef.current?.click()} className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition flex items-center gap-2">
             <Upload className="w-4 h-4" /> Batch Upload CSV
@@ -137,15 +137,15 @@ export default function StudentModule() {
                   <div className="text-sm text-muted-foreground truncate">{r.subject}</div>
                   <div className="mt-2 flex items-center justify-between">
                     <div className="flex flex-col">
-                       <span className="text-lg font-bold gradient-text">{r.score.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">Pts</span></span>
-                       <span className="text-xs text-muted-foreground">{r.percentage?.toFixed(1)}% | {r.confidence}% Confidence</span>
+                       <span className="text-lg font-bold gradient-text">{r.prediction.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">Pts</span></span>
+                       <span className="text-xs text-muted-foreground">{((r.marks / r.maxMarks) * 100).toFixed(1)}% | {r.confidence}% Confidence</span>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      r.category === 'Excellent' ? 'bg-emerald-500/20 text-emerald-400' :
-                      r.category === 'Good' ? 'bg-blue-500/20 text-blue-400' :
-                      r.category === 'Average' ? 'bg-amber-500/20 text-amber-400' :
+                      r.prediction >= 80 ? 'bg-emerald-500/20 text-emerald-400' :
+                      r.prediction >= 60 ? 'bg-blue-500/20 text-blue-400' :
+                      r.prediction >= 40 ? 'bg-amber-500/20 text-amber-400' :
                       'bg-rose-500/20 text-rose-400'
-                    }`}>{r.category}</span>
+                    }`}>{r.prediction >= 80 ? 'Excellent' : r.prediction >= 60 ? 'Good' : r.prediction >= 40 ? 'Average' : 'Poor'}</span>
                   </div>
                 </button>
               ))}
@@ -155,22 +155,27 @@ export default function StudentModule() {
           {/* Active Result Detailed View */}
           {selectedResult && (
             <div className="grid lg:grid-cols-2 gap-6 items-start">
-              <div className="glass-card rounded-xl p-6 border-l-4 border-l-primary">
-                <div className="flex items-center justify-between mb-6">
+              <div className="glass-card rounded-xl p-6 border-l-4 border-l-primary flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="font-semibold text-foreground text-lg">{selectedResult.name}'s Output</h2>
-                    <p className="text-sm text-muted-foreground">ML Analysis Breakdown ({selectedResult.confidence}% Confidence Analysis)</p>
+                    <p className="text-sm text-muted-foreground">AI Breakdown ({selectedResult.confidence}% Confidence Analysis)</p>
                   </div>
-                  <button onClick={() => exportStudentReport({ ...selectedResult, predictedScore: selectedResult.score, suggestions: selectedResult.suggestions })}
+                  <button onClick={() => exportStudentReport({ ...selectedResult, predictedScore: selectedResult.prediction, suggestions: selectedResult.ai_suggestions })}
                     className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition flex items-center gap-2">
                     <FileDown className="w-4 h-4" /> Download PDF
                   </button>
                 </div>
                 
-                <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wider opacity-60">Dynamic Action Plan</h3>
-                <ul className="space-y-3 mb-6">
-                  {selectedResult.suggestions.map((s, i) => (
-                    <li key={i} className="flex items-start gap-3 bg-muted/30 p-3 rounded-lg border border-border/50 text-sm">
+                <div className="mb-4 p-4 rounded-lg bg-primary/5 border border-primary/20 text-sm leading-relaxed text-foreground">
+                  <strong className="text-primary block mb-1">AI Analysis:</strong>
+                  {selectedResult.ai_analysis}
+                </div>
+
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> AI Suggestions:</h3>
+                <ul className="space-y-3 mb-2 flex-grow">
+                  {selectedResult.ai_suggestions.map((s, i) => (
+                    <li key={i} className="flex items-start gap-3 bg-muted/40 p-3 rounded-lg border border-border/50 text-sm">
                       <span className="text-primary font-bold mt-0.5 opacity-80">{i + 1}.</span> 
                       <span className="text-foreground leading-relaxed">{s}</span>
                     </li>
@@ -187,7 +192,7 @@ export default function StudentModule() {
                         <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                         <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, color: 'hsl(var(--foreground))' }} />
-                        <Bar dataKey="score" fill="hsl(250, 80%, 60%)" radius={[4,4,0,0]} />
+                        <Bar dataKey="prediction" fill="hsl(250, 80%, 60%)" radius={[4,4,0,0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
