@@ -4,7 +4,7 @@ import { Upload, FileDown, Sparkles, Wallet } from 'lucide-react';
 import Papa from 'papaparse';
 import { exportFinanceReport } from '@/lib/pdfExport';
 
-const API_BASE = "http://127.0.0.1:8000";
+import { BASE_URL } from '../config/api';
 
 const COLORS = ['#8b5cf6','#10b981','#f59e0b','#ef4444','#3b82f6','#ec4899','#06b6d4','#84cc16','#a855f7'];
 const defaultCategories = ['Housing','Food','Transportation','Utilities','Entertainment','Healthcare','Education','Savings','Other'];
@@ -14,12 +14,14 @@ export default function FinanceModule() {
   const [expenses, setExpenses] = useState<Record<string, number>>({});
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const performAnalysis = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/finance`, {
+      setError(null);
+      const res = await fetch(`${BASE_URL}/finance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ income, expenses })
@@ -29,6 +31,7 @@ export default function FinanceModule() {
       setAnalysis(data);
     } catch (err) {
       console.error("Failed to analyze finances", err);
+      setError("Server not responding");
     } finally {
       setLoading(false);
     }
@@ -103,6 +106,8 @@ export default function FinanceModule() {
             <Sparkles className="w-4 h-4" /> {loading ? 'Analyzing...' : 'Analyze Finances'}
           </button>
         </div>
+        {loading && <div className="text-sm font-medium text-emerald-400 mt-2">Generating insights...</div>}
+        {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
       </div>
 
       {/* Summary */}

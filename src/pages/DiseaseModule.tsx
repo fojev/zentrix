@@ -10,12 +10,13 @@ export const symptomsList = [
   'Loss of Appetite', 'Joint Pain', 'Rash', 'Blurred Vision', 'Frequent Urination',
 ];
 
-const API_BASE = "http://127.0.0.1:8000";
+import { BASE_URL } from '../config/api';
 
 export default function DiseaseModule() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [result, setResult] = useState<{ disease: string; dos: string[]; donts: string[]; ai_suggestion?: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const toggleSymptom = (s: string) => {
@@ -42,7 +43,8 @@ export default function DiseaseModule() {
     if (selectedSymptoms.length === 0) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/disease`, {
+      setError(null);
+      const res = await fetch(`${BASE_URL}/disease`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ symptoms: selectedSymptoms })
@@ -52,6 +54,7 @@ export default function DiseaseModule() {
       setResult(data);
     } catch (err) {
       console.error("Failed to predict disease", err);
+      setError("Server not responding");
     } finally {
       setLoading(false);
     }
@@ -103,8 +106,10 @@ export default function DiseaseModule() {
             <Sparkles className="w-4 h-4" /> {loading ? 'Analyzing...' : `Predict Disease (${selectedSymptoms.length} symptoms)`}
           </button>
         </div>
+        {loading && <div className="text-sm font-medium text-orange-400 mt-2">Generating insights...</div>}
+        {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
         {selectedSymptoms.length > 0 && (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground mt-2">
             Selected: {selectedSymptoms.join(', ')}
           </div>
         )}

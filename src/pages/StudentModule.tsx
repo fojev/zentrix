@@ -4,7 +4,7 @@ import { Upload, FileDown, Sparkles, TrendingUp } from 'lucide-react';
 import Papa from 'papaparse';
 import { exportStudentReport } from '@/lib/pdfExport';
 
-const API_BASE = "http://127.0.0.1:8000";
+import { BASE_URL } from '../config/api';
 
 interface Student { name: string; subject: string; marks: number; attendance: number; studyHours: number; }
 interface Result extends Student { lrScore: number; rfScore: number; avgScore: number; category: string; suggestions: string[]; ai_suggestion?: string; }
@@ -15,6 +15,7 @@ export default function StudentModule() {
   const [results, setResults] = useState<Result[]>([]);
   const [selectedResult, setSelectedResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function StudentModule() {
 
   const fetchStudents = async () => {
     try {
-      const res = await fetch(`${API_BASE}/students`);
+      const res = await fetch(`${BASE_URL}/students`);
       const data = await res.json();
       setStudents(data);
       if (data.length > 0) {
@@ -38,7 +39,8 @@ export default function StudentModule() {
     if (!form.name) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/add-student`, {
+      setError(null);
+      const res = await fetch(`${BASE_URL}/add-student`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
@@ -50,6 +52,7 @@ export default function StudentModule() {
       fetchStudents(); // Refresh results
     } catch (err) {
       console.error("Failed to add student", err);
+      setError("Server not responding");
     } finally {
       setLoading(false);
     }
@@ -68,7 +71,7 @@ export default function StudentModule() {
         
         // Send each to backend (sequentially for simplicity in this turn)
         for (const student of parsed) {
-          await fetch(`${API_BASE}/add-student`, {
+          await fetch(`${BASE_URL}/add-student`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(student)
@@ -112,6 +115,8 @@ export default function StudentModule() {
           </button>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleCSV} className="hidden" />
         </div>
+        {loading && <div className="text-sm font-medium text-primary mt-2">Generating insights...</div>}
+        {error && <div className="text-sm font-medium text-rose-500 mt-2">{error}</div>}
       </div>
 
       {/* Data Table */}
