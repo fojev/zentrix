@@ -7,7 +7,7 @@ import { exportStudentReport } from '@/lib/pdfExport';
 const API_BASE = "http://127.0.0.1:8000";
 
 interface Student { name: string; subject: string; marks: number; attendance: number; studyHours: number; }
-interface Result extends Student { lrScore: number; rfScore: number; avgScore: number; category: string; suggestions: string[]; }
+interface Result extends Student { lrScore: number; rfScore: number; avgScore: number; category: string; suggestions: string[]; ai_suggestion?: string; }
 
 export default function StudentModule() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -206,13 +206,27 @@ export default function StudentModule() {
                   <FileDown className="w-4 h-4" /> Download PDF
                 </button>
               </div>
-              <ul className="space-y-2">
+              <ul className="space-y-2 mb-6">
                 {selectedResult.suggestions.map((s, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                     <span className="text-primary mt-0.5">•</span> {s}
                   </li>
                 ))}
               </ul>
+
+              {selectedResult.ai_suggestion && (
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-2 opacity-20">
+                    <Sparkles className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-primary flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4" /> Intelligent AI Insight
+                  </h3>
+                  <p className="text-sm text-foreground leading-relaxed relative z-10">
+                    {selectedResult.ai_suggestion}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </>

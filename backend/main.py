@@ -8,6 +8,7 @@ import database
 from models.student_model import predict_student
 from models.finance_model import analyze_finance
 from models.disease_model import predict_disease
+from utils.ai_helper import generate_ai_suggestion
 
 app = FastAPI()
 
@@ -36,6 +37,9 @@ def add_student(data: Student):
         student_record["id"] = database.student_id_counter
         database.student_id_counter += 1
         
+        # Add AI Suggestion
+        student_record["ai_suggestion"] = generate_ai_suggestion("student", data.dict())
+        
         database.students_db.append(student_record)
         return student_record
     except Exception as e:
@@ -54,6 +58,10 @@ def update_student(student_id: int, data: Student):
                 updated_record = data.dict()
                 updated_record.update(prediction_result)
                 updated_record["id"] = student_id
+                
+                # Add AI Suggestion
+                updated_record["ai_suggestion"] = generate_ai_suggestion("student", data.dict())
+                
                 database.students_db[i] = updated_record
                 return updated_record
         raise HTTPException(status_code=404, detail="Student not found")
@@ -76,7 +84,11 @@ def delete_student(student_id: int):
 def finance(data: Finance):
     try:
         analysis_result = analyze_finance(data.income, data.expenses)
-        finance_db.append(analysis_result)
+        
+        # Add AI Suggestion
+        analysis_result["ai_suggestion"] = generate_ai_suggestion("finance", data.dict())
+        
+        database.finance_db.append(analysis_result)
         return analysis_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -89,9 +101,10 @@ def disease(data: Disease):
         result = {
             "disease": disease_name,
             "dos": dos,
-            "donts": donts
+            "donts": donts,
+            "ai_suggestion": generate_ai_suggestion("disease", data.dict())
         }
-        disease_db.append(result)
+        database.disease_db.append(result)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

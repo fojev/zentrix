@@ -109,7 +109,21 @@ export default function DiseaseModule() {
           <div className="glass-card rounded-xl p-6 text-center">
             <div className="text-sm text-muted-foreground mb-2">Predicted Condition</div>
             <div className="text-3xl font-bold text-rose-400 mb-1">{result.disease}</div>
-            <div className="text-sm text-muted-foreground">Based on Backend Decision Logic</div>
+            <div className="text-sm text-muted-foreground mb-4">Based on Backend Decision Logic</div>
+            
+            {result.ai_suggestion && (
+              <div className="mt-4 p-4 rounded-xl bg-orange-500/5 border border-orange-500/20 relative overflow-hidden group text-left">
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <Sparkles className="w-8 h-8 text-orange-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4" /> Intelligent Health Insight
+                </h3>
+                <p className="text-sm text-foreground leading-relaxed relative z-10">
+                  {result.ai_suggestion}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid sm:grid-cols-2 gap-6">

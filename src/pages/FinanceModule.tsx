@@ -161,13 +161,27 @@ export default function FinanceModule() {
                 <FileDown className="w-4 h-4" /> Download PDF
               </button>
             </div>
-            <ul className="space-y-2">
+            <ul className="space-y-2 mb-6">
               {analysis.suggestions.map((s: string, i: number) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                   <span className="text-emerald-400 mt-0.5">•</span> {s}
                 </li>
               ))}
             </ul>
+
+            {analysis.ai_suggestion && (
+              <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <Sparkles className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h3 className="text-sm font-semibold text-emerald-400 flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4" /> Intelligent Savings Advice
+                </h3>
+                <p className="text-sm text-foreground leading-relaxed relative z-10">
+                  {analysis.ai_suggestion}
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}
