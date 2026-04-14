@@ -14,7 +14,7 @@ import { BASE_URL, getUserId } from '../config/api';
 
 export default function DiseaseModule() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [result, setResult] = useState<{ disease: string; dos: string[]; donts: string[]; } | null>(null);
+  const [result, setResult] = useState<{ disease: string; precautions: string[]; dos: string[]; donts: string[]; lifestyle: string[]; } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -125,40 +125,66 @@ export default function DiseaseModule() {
       {/* Results */}
       {result && (
         <>
-          <div className="glass-card rounded-xl p-6 text-center">
-            <div className="text-sm text-muted-foreground mb-2">Predicted Condition</div>
-            <div className="text-3xl font-bold text-rose-400 mb-1">{result.disease}</div>
-            <div className="text-sm text-muted-foreground mb-4">Based on your symptoms</div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div className="glass-card rounded-xl p-6">
-              <h3 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2">✓ What to Do</h3>
-              <ul className="space-y-2">
-                {result.dos.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="text-emerald-400 mt-0.5">•</span> {s}
-                  </li>
-                ))}
-              </ul>
+          {/* AI Recommendation Card */}
+          <div className="glass-card rounded-xl p-6 border border-rose-500/30 shadow-lg shadow-rose-500/5 relative overflow-hidden animate-fade-in-up">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="text-center mb-6 relative z-10">
+              <h2 className="text-xl font-bold text-rose-400 flex items-center justify-center gap-2 mb-2">
+                <span className="text-2xl drop-shadow-md">🤖</span> AI Recommendation
+              </h2>
+              <p className="text-sm text-muted-foreground mb-2">🔹 AI Prediction: <strong className="text-rose-400 text-lg">{result.disease}</strong></p>
+              <div className="inline-block px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">Based on your symptoms</div>
             </div>
-            <div className="glass-card rounded-xl p-6">
-              <h3 className="font-semibold text-rose-400 mb-3 flex items-center gap-2">✗ What to Avoid</h3>
-              <ul className="space-y-2">
-                {result.donts.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="text-rose-400 mt-0.5">•</span> {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
 
-          <div className="flex justify-center">
-            <button onClick={() => exportDiseaseReport({ symptoms: selectedSymptoms, predictedDisease: result.disease, dos: result.dos, donts: result.donts })}
-              className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition flex items-center gap-2">
-              <FileDown className="w-4 h-4" /> Download PDF Report
-            </button>
+            <div className="grid sm:grid-cols-2 gap-6 relative z-10 mb-6">
+              <div>
+                <h3 className="font-semibold text-blue-400 mb-3 flex items-center gap-2">🛡️ 🔹 AI Suggestion: Precautions</h3>
+                <ul className="space-y-2 mb-6">
+                  {result.precautions.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-blue-400 mt-0.5">•</span> {s}
+                    </li>
+                  ))}
+                </ul>
+
+                <h3 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2">✓ What to Do</h3>
+                <ul className="space-y-2">
+                  {result.dos.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-emerald-400 mt-0.5">•</span> {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-indigo-400 mb-3 flex items-center gap-2">🧘 Basic Lifestyle Advice</h3>
+                <ul className="space-y-2 mb-6">
+                  {result.lifestyle.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-indigo-400 mt-0.5">•</span> {s}
+                    </li>
+                  ))}
+                </ul>
+
+                <h3 className="font-semibold text-rose-400 mb-3 flex items-center gap-2">✗ What to Avoid</h3>
+                <ul className="space-y-2">
+                  {result.donts.map((s, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-rose-400 mt-0.5">•</span> {s}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-border flex justify-center relative z-10">
+              <button onClick={() => exportDiseaseReport({ symptoms: selectedSymptoms, predictedDisease: result.disease, dos: result.dos, donts: result.donts })}
+                className="px-4 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition flex items-center gap-2">
+                <FileDown className="w-4 h-4" /> Download PDF Report
+              </button>
+            </div>
           </div>
         </>
       )}

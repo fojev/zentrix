@@ -32,7 +32,7 @@ def predict_student_endpoint(data: Student, x_user_id: Optional[str] = Header(No
         # Calculate percentage organically
         percentage = (data.marks / data.maxMarks) * 100 if data.maxMarks > 0 else 0
         
-        prediction_result = predict_student(percentage, data.attendance, data.studyHours)
+        prediction_result = predict_student(percentage, data.attendance, data.studyHours, data.subject)
         
         student_record = data.dict()
         student_record.update(prediction_result)
@@ -58,11 +58,13 @@ def disease(data: Disease, x_user_id: Optional[str] = Header(None)):
     if not x_user_id:
         raise HTTPException(status_code=400, detail="X-User-ID header missing")
     try:
-        disease_name, dos, donts = predict_disease(data.symptoms)
+        disease_name, precautions, dos, donts, lifestyle = predict_disease(data.symptoms)
         result = {
             "disease": disease_name,
+            "precautions": precautions,
             "dos": dos,
-            "donts": donts
+            "donts": donts,
+            "lifestyle": lifestyle
         }
         return result
     except Exception as e:

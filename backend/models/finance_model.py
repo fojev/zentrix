@@ -29,12 +29,16 @@ def analyze_finance(income, expenses_dict):
     savings_rate = (predicted_savings / income * 100) if income > 0 else 0
     
     suggestions = []
-    if predicted_savings < 0:
-        suggestions.append("Your expenses exceed income, reduce spending immediately.")
-    if savings_rate < 20 and predicted_savings >= 0:
-        suggestions.append("Try to save at least 20% of your income.")
-    if predicted_savings > 0 and savings_rate >= 20:
-        suggestions.append("Your financial health is stable. Consider long term investments.")
+    if total_expense > income:
+        suggestions.append("Your expenses exceed your income. It is crucial to reduce unnecessary spending immediately.")
+        suggestions.append("Create a strict budgeting plan to track every dollar and regain financial control.")
+    elif savings_rate < 20:
+        suggestions.append("Your savings are lower than optimal. Consider exploring better saving strategies.")
+        suggestions.append("Look into safe investment options to make the most of your available savings.")
+    else:
+        suggestions.append("You have excellent financial health! Keep up the smart money management.")
+        suggestions.append("Look into smart investments and mutual funds to aggressively grow your wealth.")
+        suggestions.append("Consider exploring passive income ideas to diversify your revenue streams.")
         
     return {
         "income": float(income),

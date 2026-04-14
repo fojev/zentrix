@@ -52,15 +52,55 @@ rf_classifier.fit(X_train_dis, y_train_dis)
 
 def get_precautions(disease):
     precautions = {
-        "Common Cold": {"dos": ["Rest and hydrate", "Take vitamin C"], "donts": ["Avoid cold weather", "Don't overexert"]},
-        "Flu": {"dos": ["Get plenty of rest", "Monitor temperature"], "donts": ["Avoid public places", "Don't ignore difficulty breathing"]},
-        "Migraine": {"dos": ["Rest in dark quiet room", "Apply cold compress"], "donts": ["Avoid bright lights and screens", "Skip excessive caffeine"]},
-        "Diabetes": {"dos": ["Monitor blood sugar", "Eat balanced meals"], "donts": ["Avoid sugary foods", "Don't skip medications"]},
-        "Hypertension": {"dos": ["Reduce salt intake", "Exercise regularly"], "donts": ["Avoid processed foods", "Limit alcohol and smoking"]},
-        "Allergies": {"dos": ["Identify allergens", "Keep environment clean"], "donts": ["Avoid known triggers", "Don't rub eyes"]},
-        "General Malaise": {"dos": ["Rest adequately", "Stay hydrated"], "donts": ["Don't self diagnose completely", "Don't ignore sustained pain"]}
+        "Common Cold": {
+            "precautions": ["Rest and stay warm", "Use a humidifier to ease congestion"],
+            "dos": ["Drink plenty of warm fluids", "Take vitamin C rich foods"], 
+            "donts": ["Don't go out in severe cold weather", "Don't consume refrigerated drinks"],
+            "lifestyle": ["Maintain good hygiene", "Wash hands frequently before eating"]
+        },
+        "Flu": {
+            "precautions": ["Isolate yourself to avoid spreading", "Monitor body temperature"],
+            "dos": ["Get plenty of quality sleep", "Stay thoroughly hydrated"], 
+            "donts": ["Avoid public places and crowds", "Don't ignore severe breathing issues"],
+            "lifestyle": ["Eat immune-boosting whole foods", "Rest adequately until fully recovered"]
+        },
+        "Migraine": {
+            "precautions": ["Keep your environment quiet", "Rest in a completely dark room"],
+            "dos": ["Apply a cold compress to the forehead", "Drink enough water"], 
+            "donts": ["Avoid bright screens and flashing lights", "Skip excessive caffeine and loud noise"],
+            "lifestyle": ["Maintain a regular sleep schedule", "Actively manage and reduce stress"]
+        },
+        "Diabetes": {
+            "precautions": ["Regularly check blood sugar levels", "Always carry a quick sugar source"],
+            "dos": ["Eat portion-controlled balanced meals", "Exercise moderately each day"], 
+            "donts": ["Avoid refined and artificial sugars", "Don't skip or delay any medications"],
+            "lifestyle": ["Adopt a low glycemic index diet", "Stay physically active and walk daily"]
+        },
+        "Hypertension": {
+            "precautions": ["Monitor blood pressure frequently", "Minimize sudden stressful triggers"],
+            "dos": ["Reduce salt and sodium intake", "Eat potassium-rich fruits like bananas"], 
+            "donts": ["Avoid processed and junk foods", "Limit alcohol consumption and avoid smoking"],
+            "lifestyle": ["Incorporate daily cardiovascular exercise", "Practice deep breathing or meditation"]
+        },
+        "Allergies": {
+            "precautions": ["Keep allergy medications ready", "Use indoor air purifiers"],
+            "dos": ["Identify specific allergens", "Keep your immediate environment clean"], 
+            "donts": ["Avoid known environmental triggers", "Don't rub your eyes vigorously"],
+            "lifestyle": ["Clean house regularly to remove dust", "Check local pollen forecasts daily"]
+        },
+        "General Malaise": {
+            "precautions": ["Monitor symptoms closely for progression", "Take adequate physical rest"],
+            "dos": ["Stay well-hydrated", "Eat easily digestible light meals"], 
+            "donts": ["Don't overexert yourself physically", "Don't ignore symptoms if they worsen"],
+            "lifestyle": ["Prioritize 8 hours of sleep", "Reduce mental and physical load temporarily"]
+        }
     }
-    return precautions.get(disease, {"dos": ["Rest"], "donts": ["Avoid stress"]})
+    return precautions.get(disease, {
+        "precautions": ["Take adequate rest"], 
+        "dos": ["Consult a doctor if symptoms persist"], 
+        "donts": ["Avoid physical and mental stress"], 
+        "lifestyle": ["Maintain a healthy routine"]
+    })
 
 def predict_disease(user_symptoms):
     vec = [0] * len(SYMPTOMS_LIST)
@@ -72,4 +112,4 @@ def predict_disease(user_symptoms):
     predicted_disease = str(rf_classifier.predict(input_data)[0])
     
     rules = get_precautions(predicted_disease)
-    return predicted_disease, rules["dos"], rules["donts"]
+    return predicted_disease, rules["precautions"], rules["dos"], rules["donts"], rules["lifestyle"]

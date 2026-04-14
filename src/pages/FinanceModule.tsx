@@ -167,17 +167,21 @@ export default function FinanceModule() {
           </div>
 
           {/* Suggestions */}
-          <div className="glass-card rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-400" /> AI Suggestions
-              </h2>
+          <div className="glass-card rounded-xl p-6 border border-emerald-500/30 shadow-lg shadow-emerald-500/5 relative overflow-hidden animate-fade-in-up mt-6">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div>
+                <h2 className="text-xl font-bold text-emerald-400 flex items-center gap-2 mb-1">
+                  <span className="text-2xl drop-shadow-md">🤖</span> AI Recommendation
+                </h2>
+                <p className="text-sm text-muted-foreground">🔹 AI Prediction | 🔹 AI Suggestion</p>
+              </div>
               <button onClick={() => exportFinanceReport({ income: analysis.income, expenses, totalExpenses: analysis.total_expense, savings: analysis.savings, savingsRate: analysis.savings_rate, suggestions: analysis.suggestions || [] })}
                 className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition flex items-center gap-2">
                 <FileDown className="w-4 h-4" /> Download PDF
               </button>
             </div>
-            <ul className="space-y-3 mb-6">
+            <ul className="space-y-3 mb-2 relative z-10">
                {(analysis.suggestions || []).map((s: string, i: number) => (
                   <li key={i} className="flex items-start gap-3 bg-muted/30 p-3 rounded-lg border border-border/50 text-sm">
                     <span className="text-emerald-400 font-bold mt-0.5 opacity-80">{i + 1}.</span> 

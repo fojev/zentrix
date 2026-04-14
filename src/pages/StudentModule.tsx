@@ -157,25 +157,25 @@ export default function StudentModule() {
           {/* Active Result Detailed View */}
           {selectedResult && (
             <div className="grid lg:grid-cols-2 gap-6 items-start">
-              <div className="glass-card rounded-xl p-6 border-l-4 border-l-primary flex flex-col h-full">
-                <div className="flex items-center justify-between mb-4">
+              <div className="glass-card rounded-xl p-6 border border-primary/30 shadow-lg shadow-primary/5 flex flex-col h-full relative overflow-hidden animate-fade-in-up">
+                {/* Decorative background glow */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="flex items-center justify-between mb-4 relative z-10">
                   <div>
-                    <h2 className="font-semibold text-foreground text-lg">{selectedResult.name}'s Output</h2>
-                    <p className="text-sm text-muted-foreground">AI Breakdown ({selectedResult.confidence}% Confidence Analysis)</p>
+                    <h2 className="text-xl font-bold text-primary flex items-center gap-2 mb-1">
+                      <span className="text-2xl drop-shadow-md">🤖</span> AI Recommendation
+                    </h2>
+                    <p className="text-sm text-muted-foreground">🔹 AI Prediction for {selectedResult.name} ({selectedResult.confidence}% Confidence)</p>
                   </div>
                   <button onClick={() => exportStudentReport({ ...selectedResult, predictedScore: selectedResult?.prediction ?? 0, suggestions: selectedResult?.ai_suggestions ?? [] })}
                     className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition flex items-center gap-2">
                     <FileDown className="w-4 h-4" /> Download PDF
                   </button>
                 </div>
-                
-                <div className="mb-4 p-4 rounded-lg bg-primary/5 border border-primary/20 text-sm leading-relaxed text-foreground">
-                  <strong className="text-primary block mb-1">AI Analysis:</strong>
-                  {selectedResult?.ai_analysis || "No analysis available"}
-                </div>
 
-                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> AI Suggestions:</h3>
-                <ul className="space-y-3 mb-2 flex-grow">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2 mt-2"><Sparkles className="w-4 h-4 text-primary" /> 🔹 AI Suggestion:</h3>
+                <ul className="space-y-3 mb-2 flex-grow relative z-10">
                   {selectedResult?.ai_suggestions?.length ? selectedResult.ai_suggestions.map((s, i) => (
                     <li key={i} className="flex items-start gap-3 bg-muted/40 p-3 rounded-lg border border-border/50 text-sm">
                       <span className="text-primary font-bold mt-0.5 opacity-80">{i + 1}.</span> 
